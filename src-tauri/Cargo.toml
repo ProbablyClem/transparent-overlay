@@ -13,9 +13,12 @@ tauri-build = { version = "2", features = [] }
 tauri = { version = "2", features = ["tray-icon"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-windows = { version = "0.36.1", features = [
+wmi = "0.15.2"
+widestring = "1.2.0"
+windows = { version = "0.60.0", features = [
     "Win32_Foundation",
     "Win32_UI_WindowsAndMessaging",
+    "Win32_Devices_Display"
 ] }
 winapi = { version = "0.3", features = ["winuser"] }
 tauri-plugin-shell = "2"

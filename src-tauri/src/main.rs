@@ -20,6 +20,7 @@ mod livechat;
 mod tray;
 mod url;
 mod warning;
+mod monitors_utils;
 
 fn main() {
     tauri::Builder::default()
