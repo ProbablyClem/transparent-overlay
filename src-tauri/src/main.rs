@@ -17,6 +17,7 @@ use url::{get_url_from_arg, url_is_parsable};
 mod config;
 mod config_window;
 mod livechat;
+mod monitors_utils;
 mod tray;
 mod url;
 mod warning;
@@ -26,6 +27,10 @@ fn main() {
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_single_instance::init(|_, _, _| {}))
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            Some(vec![]),
+        ))
         .setup(move |app| {
             let handle = app.handle();
 

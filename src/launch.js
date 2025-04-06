@@ -7,6 +7,10 @@ const launch_button = document.querySelector("button#launch");
 const tooltip = document.getElementById("tooltip");
 let timeout_id;
 
+select_monitor.addEventListener("change", function () {
+  this.blur();
+});
+
 url_input.addEventListener("keyup", (e) => {
   if (e.key === "Enter") launch_button.click();
 });
@@ -60,7 +64,7 @@ window.addEventListener("load", () => {
     for (let i = 0; i < res.length; i++) {
       let opt = document.createElement("option");
       opt.value = JSON.stringify(res[i]);
-      opt.innerHTML = `&nbsp;${i} (${res[i].name})`;
+      opt.innerHTML = `&nbsp;Display #${i + 1} - ${res[i].name}`;
       monitor_name == res[i].name ? opt.setAttribute("selected", true) : "";
       select_monitor.appendChild(opt);
     }

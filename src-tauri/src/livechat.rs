@@ -9,7 +9,7 @@ pub fn create_window_livechat(
     let url: webview::Url = match config.url.trim().parse() {
         Ok(parsed_url) => parsed_url,
         Err(_) => {
-            create_warning_window();
+            create_warning_window("Invalid URL to parse".into(), "Error parsing URL".into());
             return Err("Error parsing URL".to_string());
         }
     };
@@ -29,7 +29,8 @@ pub fn create_window_livechat(
             w.maximize().unwrap();
             let hwnd = w.hwnd().unwrap().0;
             let _pre_val;
-            let hwnd = windows::Win32::Foundation::HWND(hwnd as isize);
+            let hwnd = windows::Win32::Foundation::HWND(hwnd);
+
             unsafe {
                 use windows::Win32::UI::WindowsAndMessaging::*;
                 let nindex = GWL_EXSTYLE;
