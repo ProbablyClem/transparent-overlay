@@ -1,53 +1,52 @@
-# Transparent Overlay
+# mediachat-native
 
-## Overview
+Fullscreen transparent overlay for MediaChat, built with Rust + egui (OpenGL). Receives Socket.IO events from the backend and renders media (images, videos, audio, text) directly on screen — no browser, no webview.
 
-A Tauri Application displaying a transparent / fullscreen Webpage from a link provided by the User.
+## Prerequisites (Windows)
 
-## Install
+| Tool | Install |
+|---|---|
+| Rust MSVC | `winget install Rustlang.Rustup` → `rustup default stable-x86_64-pc-windows-msvc` |
+| VS BuildTools 2022 (C++) | `winget install Microsoft.VisualStudio.2022.BuildTools --override "--quiet --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --norestart"` |
+| LLVM | `winget install LLVM.LLVM` |
+| FFmpeg BtbN GPL Shared 7.1 | `winget install BtbN.FFmpeg.GPL.Shared.7.1` |
 
-This application is only available on Windows
+After installing FFmpeg, add its `bin/` folder to your **system PATH** (`ffmpeg`, `ffprobe`, `ffplay` must be reachable at runtime).
 
-### Development
+## Build
 
-<br>
-Install dev dependancies :
-
-```sh
-npm install
+```bash
+cargo build --release
+# → target/release/mediachat-native.exe
 ```
 
-<br>
-Build the debug version :
+## Run
 
-```sh
-npm run tauri:dev
+```bash
+./target/release/mediachat-native.exe --server <BACKEND_URL> --room <your-discord-username>
 ```
 
-### Production
-
-<br>
-Install prod dependancies :
-
-```sh
-npm install --omit=dev
+**Example:**
+```bash
+./target/release/mediachat-native.exe \
+  --server "http://q0g4sgow8c040ookw80g0ogg.54.36.101.56.sslip.io" \
+  --room "elkofy"
 ```
 
-<br>
-Build the release bundle (win installer) :
+> The `--server` URL is the **backend** (Socket.IO) URL, not the frontend web URL.
+> The `--room` is your Discord username — the same key used in the web viewer (`/viewer/:key`).
 
-```sh
-npm run tauri:build
+## Environment variable
+
+`--server` can also be set via `MEDIACHAT_SERVER`:
+```bash
+export MEDIACHAT_SERVER=http://...
+./mediachat-native.exe --room elkofy
 ```
 
-## Usage
+## Notes
 
-- Run the .exe to open the configuration window. A URL can be specified to open this website through a transparent / click-through overlay.
-
-- The .exe can be run from the command line, passing the URL as an argument :
-
-```bat
-& "./Transparent Overlay.exe" https://example.com
-```
-
-- The application runs in background and is accessible from the System Tray, where the webpage can be reloaded or exited.
+- Renderer: **glow (OpenGL/glutin)** for per-pixel alpha transparency on Windows
+- Video decoding: piped through `ffmpeg` subprocess (no FFI/bindgen)
+- Audio playback: `ffplay -nodisp -autoexit`
+- The overlay is fullscreen, always-on-top, click-through (mouse passthrough enabled)
