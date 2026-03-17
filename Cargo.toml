@@ -23,10 +23,19 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
 # Image decoding (pure Rust, no system deps)
-image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif", "webp", "ico"] }
+image = { version = "0.25", default-features = false, features = [
+    "png",
+    "jpeg",
+    "gif",
+    "webp",
+    "ico",
+] }
 
 # HTTP downloads — rustls avoids a system OpenSSL pkg-config dependency
-reqwest = { version = "0.12", default-features = false, features = ["blocking", "rustls-tls"] }
+reqwest = { version = "0.12", default-features = false, features = [
+    "blocking",
+    "rustls-tls",
+] }
 
 # Temp files for video decode pipeline
 tempfile = "3"
@@ -42,7 +51,7 @@ env_logger = "0.11"
 anyhow = "1"
 tray-icon = "0.21.3"
 open = "5.3.3"
-
+dotenvy = "0.15.7"
 # Windows API for overlay window setup
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", features = ["winuser"] }

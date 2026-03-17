@@ -44,12 +44,13 @@ struct Args {
 }
 
 fn main() -> anyhow::Result<()> {
+    dotenvy::dotenv()?;
     let log_path = get_logs_path();
     let log_file = fs::OpenOptions::new()
         .create(true)
         .append(true)
         .open(&log_path)?;
-    
+
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
         .target(env_logger::Target::Pipe(Box::new(log_file)))
         .format_timestamp_millis()
@@ -73,7 +74,9 @@ fn main() -> anyhow::Result<()> {
                 "quit" => std::process::exit(0),
                 "change_url" => log::info!("Change URL requested"),
                 "check_logs" => {
-                    let _ = std::process::Command::new("notepad").arg(&log_path_clone).spawn();
+                    let _ = std::process::Command::new("notepad")
+                        .arg(&log_path_clone)
+                        .spawn();
                 }
                 _ => {}
             }
