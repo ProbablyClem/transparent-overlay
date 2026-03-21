@@ -218,7 +218,9 @@ pub fn decode_circular(data: &[u8]) -> Option<ColorImage> {
     ))
 }
 
-/// Draw text with a 1 px black outline on all four diagonal corners.
+/// Draw text with a drop-shadow offset downward-right.
+/// A true 4-corner outline blends the outline color with the transparent key color
+/// at glyph edges, producing visible artifacts. A single shadow avoids this.
 pub fn outlined_text(
     p: &egui::Painter,
     text: &str,
@@ -227,15 +229,15 @@ pub fn outlined_text(
     fill: Color32,
     outline: Color32,
 ) {
-    for (dx, dy) in [(-1.0_f32, -1.0_f32), (1.0, -1.0), (-1.0, 1.0), (1.0, 1.0)] {
-        p.text(
-            Pos2::new(center.x + dx, center.y + dy),
-            Align2::CENTER_CENTER,
-            text,
-            font.clone(),
-            outline,
-        );
-    }
+    // Draw a drop-shadow at a 2px offset so the fill text stands out.
+    // The shadow color is drawn once, reducing the anti-aliased fringe to one edge.
+    p.text(
+        Pos2::new(center.x + 2.0, center.y + 2.0),
+        Align2::CENTER_CENTER,
+        text,
+        font.clone(),
+        outline,
+    );
     p.text(center, Align2::CENTER_CENTER, text, font, fill);
 }
 
