@@ -16,8 +16,8 @@ OutFile         "MediaChat-Setup-${VERSION}.exe"
 InstallDir      "${INSTALL_DIR}"
 RequestExecutionLevel user   ; LOCALAPPDATA — no admin required
 
-Icon "${__FILEDIR__}\..\installerIcon.ico"
-UninstallIcon "${__FILEDIR__}\..\installerIcon.ico"
+Icon "..\installerIcon.ico"
+UninstallIcon "..\installerIcon.ico"
 
 ; ── Pages ────────────────────────────────────────────────────────────────────
 Page instfiles
