@@ -16,8 +16,8 @@ OutFile         "MediaChat-Setup-${VERSION}.exe"
 InstallDir      "${INSTALL_DIR}"
 RequestExecutionLevel user   ; LOCALAPPDATA — no admin required
 
-Icon "..\installerIcon.ico"
-UninstallIcon "..\installerIcon.ico"
+Icon "${__FILEDIR__}\..\installerIcon.ico"
+UninstallIcon "${__FILEDIR__}\..\installerIcon.ico"
 
 ; ── Pages ────────────────────────────────────────────────────────────────────
 Page instfiles
@@ -37,10 +37,15 @@ Section "Install"
   WriteRegStr   HKCU "${REG_UNINST}" "Publisher"            "ProbablyClem"
   WriteRegStr   HKCU "${REG_UNINST}" "UninstallString"      '"$INSTDIR\Uninstall.exe"'
   WriteRegStr   HKCU "${REG_UNINST}" "DisplayIcon"          '"$INSTDIR\${APP_EXE}"'
+  WriteRegStr   HKCU "${REG_UNINST}" "InstallLocation"      "$INSTDIR"
   WriteRegDWORD HKCU "${REG_UNINST}" "NoModify"             1
   WriteRegDWORD HKCU "${REG_UNINST}" "NoRepair"             1
+  WriteRegDWORD HKCU "${REG_UNINST}" "SystemComponent"      0
 
   WriteUninstaller "$INSTDIR\Uninstall.exe"
+
+  ; Launch the app after installation
+  Exec '"$INSTDIR\${APP_EXE}"'
 SectionEnd
 
 ; ── Uninstall ─────────────────────────────────────────────────────────────────
