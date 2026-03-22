@@ -43,7 +43,7 @@ jobs:
 
       - name: Build installer
         run: >
-          makensis
+          "C:\Program Files (x86)\NSIS\makensis.exe"
           /DVERSION=${{ steps.version.outputs.VERSION }}
           installer\installer.nsi
 
