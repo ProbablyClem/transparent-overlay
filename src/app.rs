@@ -125,7 +125,13 @@ impl App {
 
     /// Play a URL (http/file) through ffplay in the background.
     fn play_audio_url(&mut self, url: &str) {
-        match Command::new("ffplay")
+        let bin = if cfg!(windows) { "ffplay.exe" } else { "ffplay" };
+        let ffplay = ffmpeg_sidecar::paths::sidecar_dir()
+            .ok()
+            .map(|d| d.join(bin))
+            .filter(|p| p.exists())
+            .unwrap_or_else(|| std::path::PathBuf::from("ffplay"));
+        match Command::new(ffplay)
             .args(["-nodisp", "-autoexit", "-loglevel", "quiet", url])
             .stdin(Stdio::null())
             .stdout(Stdio::null())

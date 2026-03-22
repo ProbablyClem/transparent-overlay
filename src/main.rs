@@ -45,6 +45,7 @@ struct Args {
 
 fn main() -> anyhow::Result<()> {
     dotenvy::dotenv()?;
+    ffmpeg_sidecar::download::auto_download().map_err(|e| anyhow::anyhow!("ffmpeg download: {e}"))?;
     let log_path = get_logs_path();
     let log_file = fs::OpenOptions::new()
         .create(true)

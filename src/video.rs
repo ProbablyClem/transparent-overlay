@@ -1,7 +1,7 @@
 /// Video decoder using FFmpeg subprocess (ffmpeg + ffprobe).
 ///
-/// Requires `ffmpeg` and `ffprobe` to be on PATH at runtime.
-/// (Add the FFmpeg bin directory to your system PATH.)
+/// FFmpeg binaries are managed by `ffmpeg-sidecar` which downloads them
+/// automatically on first run (see `main` for the `auto_download` call).
 ///
 /// Audio is handled by spawning `ffplay -nodisp -autoexit` in app.rs.
 use std::io::Read;
@@ -9,6 +9,22 @@ use std::process::{Command, Stdio};
 use std::sync::mpsc::SyncSender;
 
 use anyhow::{anyhow, Result};
+use std::path::PathBuf;
+
+/// Mirrors the `ffmpeg_path()` logic from ffmpeg-sidecar for sibling binaries
+/// (ffprobe, ffplay): prefer the sidecar copy next to the exe, fall back to PATH.
+fn sidecar_bin(name: &str) -> PathBuf {
+    let bin = if cfg!(windows) {
+        format!("{name}.exe")
+    } else {
+        name.to_string()
+    };
+    ffmpeg_sidecar::paths::sidecar_dir()
+        .ok()
+        .map(|d| d.join(&bin))
+        .filter(|p| p.exists())
+        .unwrap_or_else(|| PathBuf::from(name))
+}
 
 use crate::events::AppEvent;
 use crate::ui::{wake, CtxWaker};
@@ -72,7 +88,7 @@ fn pipeline(
 
 /// Returns (width, height, fps, has_audio) from ffprobe JSON output.
 fn probe_video(path: &str) -> Result<(u32, u32, f64, bool)> {
-    let output = Command::new("ffprobe")
+    let output = Command::new(sidecar_bin("ffprobe"))
         .args([
             "-v",
             "quiet",
@@ -139,7 +155,8 @@ fn decode_video(
     tx: SyncSender<VideoFrame>,
     waker: CtxWaker,
 ) -> Result<()> {
-    let mut child = Command::new("ffmpeg")
+    let ffmpeg = ffmpeg_sidecar::paths::ffmpeg_path();
+    let mut child = Command::new(ffmpeg)
         .args(["-i", path, "-f", "rawvideo", "-pix_fmt", "rgba", "pipe:1"])
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
