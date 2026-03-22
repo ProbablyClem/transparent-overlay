@@ -42,6 +42,7 @@ jobs:
         run: choco install nsis --no-progress -y
 
       - name: Build installer
+        shell: cmd
         run: >
           "C:\Program Files (x86)\NSIS\makensis.exe"
           /DVERSION=${{ steps.version.outputs.VERSION }}
