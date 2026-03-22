@@ -12,7 +12,7 @@
 !define REG_UNINST   "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
 
 Name            "${APP_NAME}"
-OutFile         "installer\MediaChat-Setup-${VERSION}.exe"
+OutFile         "MediaChat-Setup-${VERSION}.exe"
 InstallDir      "${INSTALL_DIR}"
 RequestExecutionLevel user   ; LOCALAPPDATA — no admin required
 
@@ -26,7 +26,7 @@ UninstPage instfiles
 ; ── Install ──────────────────────────────────────────────────────────────────
 Section "Install"
   SetOutPath "$INSTDIR"
-  File "target\release\${APP_EXE}"
+  File "..\target\release\${APP_EXE}"
 
   ; Launch at Windows startup (current user)
   WriteRegStr HKCU "${REG_RUN}" "${APP_NAME}" '"$INSTDIR\${APP_EXE}"'
