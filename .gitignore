@@ -30,3 +30,8 @@ src/styles.css
 # Hechek
 .claude/
 CLAUDE.md
+.gitnexus
+AGENTS.md
+
+# Installer
+*.exe
