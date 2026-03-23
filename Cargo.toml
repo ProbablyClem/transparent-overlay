@@ -53,6 +53,7 @@ tray-icon = "0.21.3"
 open = "5.3.3"
 dotenvy = "0.15.7"
 ffmpeg-sidecar = { git = "https://github.com/ProbablyClem/ffmpeg-sidecar" }
+notify-rust = "4.12.0"
 # Windows API for overlay window setup
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", features = ["winuser"] }

@@ -1,8 +1,11 @@
+#![windows_subsystem = "windows"]
+
 mod app;
 mod events;
 mod media;
 mod socket;
 mod tray;
+mod config;
 mod ui;
 mod video;
 use clap::Parser;
@@ -83,6 +86,9 @@ fn main() -> anyhow::Result<()> {
             }
         }
     });
+
+    // ── Load config file ───────────────────────────────────────────────────── 
+    // config::check_config_file();
 
     // ── Socket.IO in a dedicated OS thread with its own Tokio runtime ────────
     {
