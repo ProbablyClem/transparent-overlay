@@ -1,11 +1,11 @@
 #![windows_subsystem = "windows"]
 
 mod app;
+mod config;
 mod events;
 mod media;
 mod socket;
 mod tray;
-mod config;
 mod ui;
 mod video;
 use clap::Parser;
@@ -16,7 +16,7 @@ mod windows;
 
 /// Get logs file path in the application data directory
 fn get_logs_path() -> PathBuf {
-    let logs_dir = if let Ok(appdata) = std::env::var("APPDATA") {
+    let logs_dir = if let Ok(appdata) = std::env::var("LOCALAPPDATA") {
         PathBuf::from(appdata).join("MediaChat")
     } else {
         PathBuf::from(".")
@@ -33,17 +33,12 @@ fn get_logs_path() -> PathBuf {
 )]
 struct Args {
     /// Room key to join (same as the URL fragment in the web viewer)
-    #[arg(short, long, default_value = "default")]
-    room: String,
+    #[arg(short, long)]
+    room: Option<String>,
 
     /// MediaChat backend URL
-    #[arg(
-        short,
-        long,
-        env = "MEDIACHAT_SERVER",
-        default_value = "http://localhost:3000"
-    )]
-    server: String,
+    #[arg(short, long, env = "MEDIACHAT_SERVER")]
+    server: Option<String>,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -87,15 +82,25 @@ fn main() -> anyhow::Result<()> {
         }
     });
 
-    // ── Load config file ───────────────────────────────────────────────────── 
-    // config::check_config_file();
+    // ── Config validation ────────────────────────────────────────────────────
+    if !config::check_config_file(args.server.as_deref(), args.room.as_deref()) {
+        return Ok(());
+    }
+
+    let cfg = config::Config::load();
+    let server = args
+        .server
+        .or_else(|| (!cfg.server.is_empty()).then(|| cfg.server.clone()))
+        .unwrap_or_else(|| "http://localhost:3000".to_string());
+    let room = args
+        .room
+        .or_else(|| (!cfg.room.is_empty()).then(|| cfg.room.clone()))
+        .unwrap_or_else(|| "default".to_string());
 
     // ── Socket.IO in a dedicated OS thread with its own Tokio runtime ────────
     {
         let tx = event_tx.clone();
         let waker = waker.clone();
-        let server = args.server;
-        let room = args.room;
         std::thread::spawn(move || {
             let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
             if let Err(e) = rt.block_on(socket::run_socket(server, room, tx, waker)) {

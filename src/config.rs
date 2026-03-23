@@ -1,102 +1,169 @@
-use std::io::Write;
-
 use notify_rust::Notification;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize, Serialize, Default)]
+#[derive(Serialize, Deserialize)]
+struct IniRoot {
+    #[serde(rename = "MediaChat")]
+    config: Config,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
-    pub room: String,
+    #[serde(rename = "MEDIACHAT_SERVER")]
     pub server: String,
+    #[serde(rename = "MEDIACHAT_ROOM")]
+    pub room: String,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            server: "".into(),
+            room: "".into(),
+        }
+    }
 }
 
 impl Config {
-    pub fn default() -> Self {
-        Self {
-            room: "".to_string(),
-            server: "".to_string(),
-        }
-    }
-
     pub fn load() -> Self {
-        let config_path = _config_file_path();
-        if let Ok(config_str) = std::fs::read_to_string(config_path) {
-            let conf = serde_json::from_str(&config_str).unwrap_or_else(|_| Self::default());
-            Self {
-                room: conf.room,
-                server: conf.server,
+        let path = config_file_path();
+        let parsed = std::fs::read_to_string(&path)
+            .ok()
+            .and_then(|s| serde_ini::from_str::<IniRoot>(&s).ok())
+            .map(|r| r.config);
+
+        match parsed {
+            Some(cfg) => cfg,
+            None => {
+                let default = Config::default();
+                write_ini(&default, &path);
+                default
             }
-        } else {
-            Self::default()
         }
     }
 }
-// TODO
-// Check the only keys are "room" and "server"
-// pub fn check_config_file() -> bool {
-//     let config_path = _config_file_path();
-//     let icon_path = get_icon_path();
-//     let config_str = match std::fs::read_to_string(&config_path) {
-//         Ok(s) => s,
-//         Err(err) => {
-//             Notification::new()
-//                 .app_id("Transparent.Overlay.App")
-//                 .summary("Error loading configuration file")
-//                 .body(format!("Error reading {:?}", config_path).as_str())
-//                 .icon(&icon_path)
-//                 .show()
-//                 .unwrap();
-//             return false;
-//         }
-//     };
-//     false
-//     // let json: serde_json::Value = match serde_json::from_str(&config_str) {
-//     //     Ok(v) => v,
-//     //     Err(err) => {
-//     //         log::warn!("Invalid JSON file {:?}: {err}", config_path);
-//     //         return false;
-//     //     }
-//     // };
 
-//     // let object = match json.as_object() {
-//     //     Some(obj) => obj,
-//     //     None => {
-//     //         Self::show_warn("Le fichier de config n'est pas un objet JSON");
-//     //         return false;
-//     //     }
-//     // };
+pub fn check_config_file(server: Option<&str>, room: Option<&str>) -> bool {
+    let config_path = config_file_path();
+    // let icon_path = get_icon_path();
 
-//     // let allowed = ["room", "server"];
-//     // let mut valid = true;
+    let mut cfg = if config_path.exists() {
+        match std::fs::read_to_string(&config_path)
+            .map_err(|e| e.to_string())
+            .and_then(|s| serde_ini::from_str::<IniRoot>(&s).map_err(|e| e.to_string()))
+        {
+            Ok(r) => r.config,
+            Err(e) => {
+                let default: Config = Config::default();
+                write_ini(&default, &config_path);
 
-//     // for key in object.keys() {
-//     //     if !allowed.contains(&key.as_str()) {
-//     //         Self::show_warn(&format!("La clé '{}' n'est pas reconnue", key));
-//     //         valid = false;
-//     //     }
-//     // }
-//     // valid
-// }
+                let err_msg = e
+                    .strip_prefix("Custom(\"")
+                    .and_then(|s| s.strip_suffix("\")"))
+                    .unwrap_or(&e)
+                    .to_string();
 
-fn _config_file_path() -> std::path::PathBuf {
-    if let Ok(appdata) = std::env::var("APPDATA") {
-        std::path::PathBuf::from(appdata)
-            .join("Transparent-Overlay")
-            .join("config.json")
+                Notification::new()
+                    .app_id("MediaChat") // To comment if notif doesn't display
+                    .summary("Configuration error - Config.ini")
+                    .body(&format!("Can't parse config.ini : {err_msg}"))
+                    // .icon(&icon_path)
+                    .show()
+                    .ok();
+                let _ = std::process::Command::new("notepad")
+                    .arg(&config_path)
+                    .spawn();
+                return false;
+            }
+        }
     } else {
-        std::env::current_dir().unwrap().join("config.json")
-    }
-}
-
-pub fn get_icon_path() -> String {
-    let temp_dir = std::env::temp_dir();
-    let icon_path = temp_dir.join("transparent-overlay.png");
-
-    if !icon_path.exists() {
-        let ico_bytes = include_bytes!("../assets/icon.png");
-
-        if let Ok(mut file) = std::fs::File::create(&icon_path) {
-            let _ = file.write_all(ico_bytes);
+        if let Some(parent) = config_path.parent() {
+            let _ = std::fs::create_dir_all(parent);
         }
+        let default = Config::default();
+        write_ini(&default, &config_path);
+        default
+    };
+
+    // Override conf var with cli args
+    if let Some(s) = server {
+        cfg.server = s.to_string();
     }
-    icon_path.to_string_lossy().into_owned()
+    if let Some(r) = room {
+        cfg.room = r.to_string();
+    }
+
+    // Check empty fields
+    let mut empty_fields: Vec<&str> = Vec::new();
+    if cfg.server.is_empty() {
+        empty_fields.push("MEDIACHAT_SERVER");
+    }
+    if cfg.room.is_empty() {
+        empty_fields.push("MEDIACHAT_ROOM");
+    }
+
+    if !empty_fields.is_empty() {
+        write_ini(&cfg, &config_path);
+        let keys = empty_fields
+            .iter()
+            .map(|k| format!("\"{k}\""))
+            .collect::<Vec<_>>()
+            .join(" and ");
+        Notification::new()
+            .app_id("MediaChat") // To comment if notif doesn't display
+            .summary("Configuration error - Empty key(s)")
+            .body(&format!(
+                "{keys} key{} {} empty.",
+                if empty_fields.len() > 1 { "s" } else { "" },
+                if empty_fields.len() > 1 { "are" } else { "is" },
+            ))
+            // .icon(&icon_path)
+            .show()
+            .ok();
+        let _ = std::process::Command::new("notepad")
+            .arg(&config_path)
+            .spawn();
+        return false;
+    }
+
+    // Save CLI args into conf
+    if server.is_some() || room.is_some() {
+        write_ini(&cfg, &config_path);
+    }
+
+    true
 }
+
+fn write_ini(cfg: &Config, path: &std::path::Path) {
+    let root = IniRoot {
+        config: cfg.clone(),
+    };
+    if let Ok(s) = serde_ini::to_string(&root) {
+        let _ = std::fs::write(path, s);
+    }
+}
+
+fn config_file_path() -> std::path::PathBuf {
+    if let Ok(appdata) = std::env::var("LOCALAPPDATA") {
+        std::path::PathBuf::from(appdata)
+            .join("Mediachat")
+            .join("config.ini")
+    } else {
+        std::env::current_dir().unwrap().join("config.ini")
+    }
+}
+
+// TEST IF NOT NEEDED WITH WINDOWS INSTALLER
+// pub fn get_icon_path() -> String {
+//     let temp_dir = std::env::temp_dir();
+//     let icon_path = temp_dir.join("transparent-overlay.png");
+
+//     if !icon_path.exists() {
+//         let ico_bytes = include_bytes!("../assets/icon.png");
+
+//         if let Ok(mut file) = std::fs::File::create(&icon_path) {
+//             let _ = file.write_all(ico_bytes);
+//         }
+//     }
+//     icon_path.to_string_lossy().into_owned()
+// }
