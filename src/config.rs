@@ -64,7 +64,7 @@ pub fn check_config_file(server: Option<&str>, room: Option<&str>) -> bool {
                     .to_string();
 
                 Notification::new()
-                    .app_id("MediaChat") // To comment if notif doesn't display
+                    .app_id("MediaChat") // Requires AUMID registered in registry (done by installer)
                     .summary("Configuration error - Config.ini")
                     .body(&format!("Can't parse config.ini : {err_msg}"))
                     // .icon(&icon_path)
@@ -110,7 +110,7 @@ pub fn check_config_file(server: Option<&str>, room: Option<&str>) -> bool {
             .collect::<Vec<_>>()
             .join(" and ");
         Notification::new()
-            .app_id("MediaChat") // To comment if notif doesn't display
+            .app_id("MediaChat") // Requires AUMID registered in registry (done by installer)
             .summary("Configuration error - Empty key(s)")
             .body(&format!(
                 "{keys} key{} {} empty.",

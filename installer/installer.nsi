@@ -27,10 +27,11 @@ UninstPage instfiles
 Section "Install"
   SetOutPath "$INSTDIR"
   File "..\target\release\${APP_EXE}"
+  File "..\assets\icon.png"
 
   ; Register AppUserModelId so that toast notifications work
   WriteRegStr HKCU "Software\Classes\AppUserModelId\${APP_NAME}" "DisplayName" "${APP_NAME}"
-  WriteRegStr HKCU "Software\Classes\AppUserModelId\${APP_NAME}" "IconUri"     "$INSTDIR\${APP_EXE}"
+  WriteRegStr HKCU "Software\Classes\AppUserModelId\${APP_NAME}" "IconUri"     "$INSTDIR\icon.png"
 
   ; Launch at Windows startup (current user)
   WriteRegStr HKCU "${REG_RUN}" "${APP_NAME}" '"$INSTDIR\${APP_EXE}"'
@@ -58,6 +59,7 @@ Section "Uninstall"
   ExecWait 'taskkill /F /IM "${APP_EXE}"'
 
   Delete "$INSTDIR\${APP_EXE}"
+  Delete "$INSTDIR\icon.png"
   Delete "$INSTDIR\Uninstall.exe"
   RMDir  "$INSTDIR"
 
