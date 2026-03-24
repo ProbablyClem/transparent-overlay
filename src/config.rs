@@ -45,7 +45,6 @@ impl Config {
 
 pub fn check_config_file(server: Option<&str>, room: Option<&str>) -> bool {
     let config_path = config_file_path();
-    // let icon_path = get_icon_path();
 
     let mut cfg = if config_path.exists() {
         match std::fs::read_to_string(&config_path)
@@ -67,7 +66,6 @@ pub fn check_config_file(server: Option<&str>, room: Option<&str>) -> bool {
                     .app_id("MediaChat") // Requires AUMID registered in registry (done by installer)
                     .summary("Configuration error - Config.ini")
                     .body(&format!("Can't parse config.ini : {err_msg}"))
-                    // .icon(&icon_path)
                     .show()
                     .ok();
                 let _ = std::process::Command::new("notepad")
@@ -117,7 +115,6 @@ pub fn check_config_file(server: Option<&str>, room: Option<&str>) -> bool {
                 if empty_fields.len() > 1 { "s" } else { "" },
                 if empty_fields.len() > 1 { "are" } else { "is" },
             ))
-            // .icon(&icon_path)
             .show()
             .ok();
         let _ = std::process::Command::new("notepad")
@@ -152,18 +149,3 @@ fn config_file_path() -> std::path::PathBuf {
         std::env::current_dir().unwrap().join("config.ini")
     }
 }
-
-// TEST IF NOT NEEDED WITH WINDOWS INSTALLER
-// pub fn get_icon_path() -> String {
-//     let temp_dir = std::env::temp_dir();
-//     let icon_path = temp_dir.join("transparent-overlay.png");
-
-//     if !icon_path.exists() {
-//         let ico_bytes = include_bytes!("../assets/icon.png");
-
-//         if let Ok(mut file) = std::fs::File::create(&icon_path) {
-//             let _ = file.write_all(ico_bytes);
-//         }
-//     }
-//     icon_path.to_string_lossy().into_owned()
-// }
