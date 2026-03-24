@@ -140,7 +140,7 @@ fn write_ini(cfg: &Config, path: &std::path::Path) {
     }
 }
 
-fn config_file_path() -> std::path::PathBuf {
+pub fn config_file_path() -> std::path::PathBuf {
     if let Ok(appdata) = std::env::var("LOCALAPPDATA") {
         std::path::PathBuf::from(appdata)
             .join("Mediachat")
