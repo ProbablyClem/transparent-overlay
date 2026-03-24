@@ -125,7 +125,11 @@ impl App {
 
     /// Play a URL (http/file) through ffplay in the background.
     fn play_audio_url(&mut self, url: &str) {
-        let bin = if cfg!(windows) { "ffplay.exe" } else { "ffplay" };
+        let bin = if cfg!(windows) {
+            "ffplay.exe"
+        } else {
+            "ffplay"
+        };
         let ffplay = ffmpeg_sidecar::paths::sidecar_dir()
             .ok()
             .map(|d| d.join(bin))
@@ -182,6 +186,7 @@ impl App {
                 }
 
                 AppEvent::Flush => {
+                    log::info!("flush");
                     self.queue.clear();
                     self.kill_audio();
                     self.current = None;

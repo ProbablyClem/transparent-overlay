@@ -1,10 +1,10 @@
 use anyhow::Result;
 use rust_socketio::{
     asynchronous::{Client, ClientBuilder},
-    Payload,
+    Event, Payload,
 };
 use serde_json::json;
-use std::sync::mpsc::Sender;
+use std::{iter::Skip, sync::mpsc::Sender};
 
 use crate::{
     events::AppEvent,
@@ -27,7 +27,8 @@ pub async fn run_socket(
     let room_join = room;
 
     let client = ClientBuilder::new(server_url)
-        .on("connect", move |_, socket: Client| {
+        .on(Event::Connect, move |_, socket: Client| {
+            println!("ws: connect");
             let room = room_join.clone();
             Box::pin(async move {
                 match socket.emit("join", json!(room)).await {
@@ -53,25 +54,41 @@ pub async fn run_socket(
                 }
             })
         })
-        .on("flush", move |_, _| {
-            let tx = tx_flush.clone();
-            let waker = waker_flush.clone();
+        .on(Event::Message, move |payload, _| {
+            let tx_flush = tx_flush.clone();
+            let waker_flush = waker_flush.clone();
+            let tx_skip = tx_skip.clone();
+            let waker_skip = waker_skip.clone();
             Box::pin(async move {
-                let _ = tx.send(AppEvent::Flush);
-                wake(&waker);
+                if let Payload::Text(values) = payload {
+                    for val in values {
+                        match serde_json::from_value::<String>(val) {
+                            Ok(text) => match text.as_str() {
+                                "flush" => {
+                                    let _ = tx_flush.send(AppEvent::Flush);
+                                    wake(&waker_flush);
+                                }
+                                "skip" => {
+                                    let _ = tx_skip.send(AppEvent::Skip);
+                                    wake(&waker_skip);
+                                }
+                                unkown => log::warn!("unkown socket message {}", unkown),
+                            },
+                            Err(e) => log::warn!("socket message parse error: {e}"),
+                        }
+                    }
+                }
             })
         })
-        .on("skip", move |_, _| {
-            let tx = tx_skip.clone();
-            let waker = waker_skip.clone();
-            Box::pin(async move {
-                let _ = tx.send(AppEvent::Skip);
-                wake(&waker);
-            })
-        })
-        .on("error", |err, _| {
+        .on(Event::Error, |err, _| {
             Box::pin(async move {
                 log::error!("Socket.IO error: {err:?}");
+            })
+        })
+        .on_any(move |e, p, _| {
+            Box::pin(async move {
+                println!("{:?}", e);
+                println!("{:?}", p);
             })
         })
         .connect()
