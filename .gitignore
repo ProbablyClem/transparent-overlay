@@ -26,4 +26,12 @@ dist-ssr
 target
 src/styles.css
 .env
-.claude/settings.local.json
+
+# Hechek
+.claude/
+CLAUDE.md
+.gitnexus
+AGENTS.md
+
+# Installer
+*.exe

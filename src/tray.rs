@@ -5,6 +5,14 @@ use tray_icon::{
 
 pub fn create_tray_icon() -> anyhow::Result<tray_icon::TrayIcon> {
     let tray_menu = _create_tray_menu();
+
+    #[cfg(target_os = "windows")]
+    unsafe {
+        use tray_icon::menu::ContextMenu;
+        use winapi::um::winuser::SetMenuDefaultItem;
+        SetMenuDefaultItem(tray_menu.hpopupmenu() as *mut _, 0, 1);
+    }
+
     let tray_icon = TrayIconBuilder::new()
         .with_icon(Icon::from_resource(1, None).unwrap_or_else(|e| {
             log::error!("error loading resource : {:?}", e);
@@ -12,13 +20,14 @@ pub fn create_tray_icon() -> anyhow::Result<tray_icon::TrayIcon> {
             Icon::from_rgba(fallback_pixels, 32, 32).expect("Error creating fallback icon")
         }))
         .with_menu(Box::new(tray_menu))
+        .with_menu_on_left_click(false)
         .with_tooltip("MediaChat - Overlay")
         .build()?;
     Ok(tray_icon)
 }
 
 fn _create_tray_menu() -> Menu {
-    let url_i = MenuItem::with_id("change_url", "Changer server URL", true, None);
+    let url_i = MenuItem::with_id("change_config", "Open config", true, None);
     let logs_i = MenuItem::with_id("check_logs", "Check logs", true, None);
     let sep_i = PredefinedMenuItem::separator();
     let quit_i = MenuItem::with_id("quit", "Quit", true, None);
