@@ -28,7 +28,6 @@ pub async fn run_socket(
 
     let client = ClientBuilder::new(server_url)
         .on(Event::Connect, move |_, socket: Client| {
-            println!("ws: connect");
             let room = room_join.clone();
             Box::pin(async move {
                 match socket.emit("join", json!(room)).await {
@@ -83,12 +82,6 @@ pub async fn run_socket(
         .on(Event::Error, |err, _| {
             Box::pin(async move {
                 log::error!("Socket.IO error: {err:?}");
-            })
-        })
-        .on_any(move |e, p, _| {
-            Box::pin(async move {
-                println!("{:?}", e);
-                println!("{:?}", p);
             })
         })
         .connect()
