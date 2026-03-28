@@ -9,7 +9,10 @@ use std::process::{Command, Stdio};
 use std::sync::mpsc::SyncSender;
 
 use anyhow::{anyhow, Result};
+use std::os::windows::process::CommandExt;
 use std::path::PathBuf;
+
+const CRATE_NO_WINDOW_FLAG: u32 = 0x08000000;
 
 /// Mirrors the `ffmpeg_path()` logic from ffmpeg-sidecar for sibling binaries
 /// (ffprobe, ffplay): prefer the sidecar copy next to the exe, fall back to PATH.
@@ -97,6 +100,7 @@ fn probe_video(path: &str) -> Result<(u32, u32, f64, bool)> {
             "-show_streams",
             path,
         ])
+        .creation_flags(CRATE_NO_WINDOW_FLAG)
         .output()?;
 
     let json: serde_json::Value = serde_json::from_slice(&output.stdout)
@@ -160,6 +164,7 @@ fn decode_video(
         .args(["-i", path, "-f", "rawvideo", "-pix_fmt", "rgba", "pipe:1"])
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
+        .creation_flags(CRATE_NO_WINDOW_FLAG)
         .spawn()?;
 
     let frame_size = (width * height * 4) as usize;
