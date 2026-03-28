@@ -1,5 +1,6 @@
 use std::{
     collections::VecDeque,
+    os::windows::process::CommandExt,
     path::PathBuf,
     process::{Child, Command, Stdio},
     sync::mpsc::{Receiver, Sender},
@@ -14,6 +15,8 @@ use crate::{
     ui::{decode_circular, decode_image, wake, CtxWaker},
     video::{spawn_video_decoder, VideoFrame},
 };
+
+const CRATE_NO_WINDOW_FLAG: u32 = 0x08000000;
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  App state
@@ -140,6 +143,7 @@ impl App {
             .stdin(Stdio::null())
             .stdout(Stdio::null())
             .stderr(Stdio::null())
+            .creation_flags(CRATE_NO_WINDOW_FLAG)
             .spawn()
         {
             Ok(child) => self.audio_child = Some(child),
