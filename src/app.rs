@@ -121,8 +121,12 @@ impl App {
 
     fn kill_audio(&mut self) {
         if let Some(mut child) = self.audio_child.take() {
-            let _ = child.kill();
-            let _ = child.wait();
+            let _ = std::process::Command::new("taskkill")
+                .args(["/F", "/T", "/PID", &child.id().to_string()])
+                .creation_flags(CRATE_NO_WINDOW_FLAG)
+                .output();
+            let _ = child.kill().expect("Error killing audio");
+            let _ = child.wait().expect("Error waiting");
         }
     }
 

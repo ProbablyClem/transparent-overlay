@@ -4,7 +4,7 @@ use rust_socketio::{
     Event, Payload,
 };
 use serde_json::json;
-use std::{iter::Skip, sync::mpsc::Sender};
+use std::sync::mpsc::Sender;
 
 use crate::{
     events::AppEvent,
